@@ -1,0 +1,2 @@
+Git learning notes
+This file will be used for merge conflict practice.
