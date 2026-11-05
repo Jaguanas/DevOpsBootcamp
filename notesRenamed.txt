@@ -1,4 +1,5 @@
 Git learning notes
 
-This is the MAIN branch version.
+This is the rebased version combining changes from main and feature-update.
 We are practicing Git merge and rebase.
+Both branches contributed changes.
