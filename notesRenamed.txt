@@ -1,2 +1,4 @@
 Git learning notes
-This file will be used for merge conflict practice.
+
+This is the MAIN branch version.
+We are practicing Git merge and rebase.
