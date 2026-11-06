@@ -1,0 +1,17 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Collect EC2 Info') {
+            steps {
+                sh 'bash scripts/ec2-info.sh | tee ec2-info.txt'
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'ec2-info.txt', allowEmptyArchive: true
+        }
+    }
+}

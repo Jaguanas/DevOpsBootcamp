@@ -1,0 +1,36 @@
+pipeline {
+    agent any
+
+    triggers {
+        cron('H/15 * * * *')   // every ~15 minutes
+    }
+
+    environment {
+        // change CRIT to '1' once to see what a failing health check looks like
+        WARN = '70'
+        CRIT = '90'
+    }
+
+    stages {
+        stage('Health Check') {
+            steps {
+                sh '''
+                    set +e
+                    bash scripts/health-check.sh > health-report.txt
+                    rc=$?
+                    cat health-report.txt
+                    if grep -q "CRITICAL" health-report.txt; then
+                        echo "CRITICAL issues found!"
+                    fi
+                    exit $rc
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'health-report.txt', allowEmptyArchive: true
+        }
+    }
+}
