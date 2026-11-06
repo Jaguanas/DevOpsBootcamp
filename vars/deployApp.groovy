@@ -9,9 +9,3 @@ def call(Map config) {
         echo 'Deployment completed successfully'
     """
 }
-EOF
-
-cat > vars/notifySlack.groovy <<'EOF'
-def call(String message) {
-    echo "Slack notification: ${message}"
-}
