@@ -1,0 +1,81 @@
+// Jenkinsfile for bootcamp scripts
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION = 'eu-west-1'
+        BUILD_ENV  = 'development'
+        DEPLOY_DIR = '/opt/bootcamp-labs'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo "Checked out bootcamp scripts from Git (branch: ${env.GIT_BRANCH})"
+            }
+        }
+
+        stage('Script Validation') {
+            steps {
+                sh '''
+                    cd scripts
+                    echo "=== Script Validation ==="
+                    failed=0
+                    for script in *.sh; do
+                        [ -f "$script" ] || continue
+                        if bash -n "$script"; then
+                            echo "OK    $script syntax"
+                        else
+                            echo "ERROR $script syntax"
+                            failed=1
+                        fi
+                    done
+                    exit $failed
+                '''
+            }
+        }
+
+        stage('Test Scripts') {
+            steps {
+                // Only non-interactive scripts are executed (a menu script would wait for input forever)
+                sh '''
+                    cd scripts
+                    chmod +x *.sh
+                    for s in system-info.sh health-check.sh; do
+                        if [ -f "$s" ]; then
+                            echo "=== Running $s ==="
+                            ./"$s"
+                        fi
+                    done
+                '''
+            }
+        }
+
+        stage('Deploy Scripts') {
+            when {
+                // true for a normal Pipeline job (origin/main) and for a multibranch job (main)
+                expression { (env.GIT_BRANCH ?: env.BRANCH_NAME ?: '') ==~ /(origin\/)?main/ }
+            }
+            steps {
+                sh '''
+                    echo "=== Deploying Bootcamp Scripts to $DEPLOY_DIR ==="
+                    mkdir -p "$DEPLOY_DIR/scripts"
+                    cp scripts/*.sh "$DEPLOY_DIR/scripts/"
+                    chmod +x "$DEPLOY_DIR"/scripts/*.sh
+                    echo "Deployment completed successfully"
+                    ls -la "$DEPLOY_DIR/scripts/"
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Bootcamp Pipeline completed"
+            archiveArtifacts artifacts: 'scripts/*.sh', allowEmptyArchive: true
+        }
+        success { echo "Bootcamp Pipeline succeeded!" }
+        failure { echo "Bootcamp Pipeline failed!" }
+    }
+}
